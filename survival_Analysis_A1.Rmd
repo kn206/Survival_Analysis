@@ -1,0 +1,168 @@
+---
+title: "Survival_Analysis_A1"
+author: "Kelvin Nyongesa"
+date: "2023-05-25"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Weibul Distribution
+
+```{r}
+library(ggplot2)
+
+# Define the values for the scale and x parameters
+scale <- 2
+x <- seq(0, 10, 0.1)
+
+# Define the values for the shape parameter
+shapes <- c(1, 1.2, 0.80)
+
+# Create an empty list to store the hazard function values for each shape parameter
+hx_list <- list()
+
+# Loop over the different shape values and calculate the hazard function values
+for (shape in shapes) {
+  # Manually set the hazard function to a constant value equal to the scale parameter for shape = 1
+  if (shape == 1) {
+    hx <- rep(scale, length(x))
+  } else {
+    hx <- scale * shape * ((scale * x) ^ (shape - 1))
+  }
+  hx_list[[as.character(shape)]] <- hx
+}
+
+# Combine the hazard function values for each shape parameter into a single data frame
+df <- data.frame(x, hx_list)
+
+# Use ggplot to plot the hazard function values for each shape parameter
+ggplot(df, aes(x)) +
+  geom_line(aes(y = hx_list[[as.character(1)]], color = "Shape Parameter 1")) +
+  geom_line(aes(y = hx_list[[as.character(1.2)]], color = "Shape Parameter 2")) +
+  geom_line(aes(y = hx_list[[as.character(0.8)]], color = "Shape Parameter 3")) +
+  xlab("Time") + ylab("Hazard Rate") +
+  scale_color_manual(name = "Shape Parameter", values = c("Shape Parameter 1" = "red", 
+                                                          "Shape Parameter 2" = "blue", 
+                                                          "Shape Parameter 3" = "green"), 
+                     labels = c("1", "1.2", "0.80")) +
+  ggtitle("Hazard Function of Weibull Distribution for Different Shape Parameters")
+
+```
+
+The Wei bull hazard curve can be used in risk analysis and insurance, especially when determining how long an insured object or event will last. It aids in estimating the changing hazard rate linked to risks like equipment breakdowns, accidents, or natural disasters for property insurance. As products age, the curve may show an increasing risk rate, allowing insurers to modify pricing and underwriting tactics accordingly. Additionally, it may show decreasing danger rates as a result of maintenance or safety measures, which would result in lower premiums. Furthermore, consistent pricing structures are made possible by a constant hazard rate, which denotes constant risk over the course of an item's life cycle.
+
+#2. Log Normal Distribution
+
+```{r}
+# Load the necessary libraries
+library(ggplot2)
+library(survival)
+
+# Set the parameters for the log-normal distribution
+mu <- -1  # Mean of the logarithm of survival time
+sigma <- 0.5  # Standard deviation of the logarithm of survival time
+
+# Generate a sequence of time values
+time <- seq(0.1, 10, by = 0.1)
+
+# Calculate the log-normal PDF and survival function for each time point
+pdf <- dlnorm(time, meanlog = mu, sdlog = sigma)
+survival <- 1 - plnorm(time, meanlog = mu, sdlog = sigma)
+
+# Calculate the hazard function by dividing the PDF by the survival function
+hazard <- pdf / survival
+
+# Create a data frame with the time and hazard values
+data <- data.frame(Time = time, Hazard = hazard)
+
+# Plot the hazard function
+ggplot(data, aes(x = Time, y = Hazard)) +
+  geom_line() +
+  xlab("Time") +
+  ylab("Hazard Function") +
+  ggtitle("Hazard Function of Log-Normal Distribution")
+
+```
+
+Situation
+Bio medical Research: In bio medical research, the log-normal hazard function can be applied to study the time until the recurrence of a disease in patients.
+
+#3. Log logistic
+```{r}
+library(survival)
+
+# Define parameters for log-logistic distribution
+location <- 0 # location parameter
+scale <- 9 # scale parameter
+shape <- 2 # shape parameter
+
+# Define function for hazard rate
+hazard <- function(x) {
+  dlogis(x, location, scale) * (shape / scale) * (x / scale)^((shape - 1)/shape) / (1 + (x / scale)^shape)^2
+}
+
+# Plot hazard rate function
+plot(seq(0, 10, 0.01), hazard(seq(0, 10, 0.01)), type = "l",col="blue", xlab = "Time", ylab = "Hazard rate", main = "Log logistic hazard function")
+```
+
+Disease Outbreak and Epidemics:    The log-logistic hazard function can be utilized to model the spread and intensity of disease outbreaks and epidemics.
+The hazard function curve reflects the changing risk or rate of disease transmission over time.
+
+#Gompertz Distribution
+
+```{r}
+library(survival)
+library(ggplot2)
+
+# Set the parameters for the gompertz distribution
+beta <- 0.03#force of mortality
+eta <- 0.55#shape parameter
+
+# Define the hazard function
+hazard_function <- function(t) beta * exp(eta * t)
+
+# Plot the hazard function
+ggplot(data.frame(t = c(0, 10)), aes(t)) +
+  stat_function(fun = hazard_function, color = "blue", size = 1.2) +
+  labs(x = "Time", y = "Hazard Function", 
+       title = "Gompertz distribution Hazard function")
+```
+
+Human Mortality:The Gompertz hazard function is widely used in actuarial science and demography to model human mortality rates.
+By analyzing the Gompertz hazard function, actuaries and demographers can estimate life expectancy, assess insurance risks, and develop retirement planning strategies.
+
+#5. Gompertz Makeham
+
+```{r}
+library(survival)
+
+# Define the parameters
+beta <- 0.2  # scale parameter
+alpha <- 0.5  # shape parameter
+gamma <- 0.01  # Makeham parameter
+
+# Define the hazard function
+hazard_gm <- function(t) {
+  beta * exp(alpha * t) + gamma
+}
+
+# Plot the hazard function
+curve(hazard_gm, from = 0, to = 10, ylab = "hazard", xlab = "time",
+      main = "Gompertz-Makeham distribution Hazard function", col="green")
+```
+
+Disease Progression: The Gompertz-Make ham hazard function can be used to model the progression of certain diseases over time.
+The linear component may account for factors such as treatment efficacy or disease management strategies that can influence the hazard rate linearly with time.
+
+#Draw back of using parametric models to analyze Survival Data
+
+Difficulty in specifying the distribution of the survival time especially if the data are not well-behaved.
+
+The sensitivity of the results depends the choice of distribution. If the wrong distribution is chosen, the results can be misleading.
+
+The difficulty of interpreting the results. The results of parametric survival models can be difficult to understand, especially for non-technical audiences.
